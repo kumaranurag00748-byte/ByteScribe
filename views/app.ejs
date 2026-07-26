@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ByteScribe</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="/public/main.css" />
+  </head>
+  <body>
+    <div class="page-wrapper d-flex flex-column min-vh-100">
+      <div class="container-fluid px-4">
+        <%- include("partials/header.ejs") %>
+      </div>
+
+      <main class="flex-fill d-flex flex-column justify-content-center align-items-center text-center py-5 px-4 gap-3">
+        <form action="/post/new" method="POST" class="d-flex flex-column justify-content-center align-items-center gap-3 w-100">
+          <input
+            type="text"
+            name="title"
+            class="form-control w-50"
+            placeholder="Enter Title..."
+            aria-label="Title"
+            value="<%= formData?.title || '' %>"
+          />
+          <textarea
+            name="content"
+            class="form-control w-50"
+            placeholder="Enter Content..."
+            aria-label="Content"
+            rows="6"
+          ><%= formData?.content || '' %></textarea>
+          <button type="submit" class="btn btn-primary">Post Blog</button>
+          <% if (errorMessage) { %>
+            <div class="text-danger"><%= errorMessage %></div>
+          <% } %>
+        </form>
+      </main>
+
+      <div class="container-fluid px-3">
+        <%- include("partials/footer.ejs") %>
+      </div>
+    </div>
+  </body>
+</html>
