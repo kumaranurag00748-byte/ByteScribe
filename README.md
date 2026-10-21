@@ -7,11 +7,13 @@ A small Node.js + Express blog application with server-side rendered views using
 - Create, view, edit, and delete blog posts
 - Server-side rendered pages with EJS templates
 - Bootstrap-based layout and custom styles
-- In-memory storage for posts (no database required)
+- PostgreSQL storage for posts
 
 ## Project structure
 
 - `index.js` - Main Express application entry point
+- `db.js` - PostgreSQL connection pool, schema initialization, and post queries
+- `.env.example` - PostgreSQL connection settings template
 - `package.json` - Node dependencies and package metadata
 - `public/` - Static assets
   - `main.css` - Custom styling
@@ -28,16 +30,37 @@ A small Node.js + Express blog application with server-side rendered views using
 
 ## Installation
 
-1. Install dependencies:
+1. Install dependencies from the project directory:
 
 ```bash
+cd "C:\Users\hp\Desktop\Full Stack Web Development\BlogWebApp"
 npm install
 ```
 
-2. Run the application:
+2. Create a PostgreSQL database. For a local PostgreSQL installation, run:
+
+```sql
+CREATE DATABASE blogdb;
+```
+
+3. Create the environment file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Open `.env` and replace `your_password` with the password for the PostgreSQL user. The default local connection is:
+
+```text
+postgresql://postgres:your_password@localhost:5432/blogdb
+```
+
+You can instead set separate `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` values. `DATABASE_URL` takes precedence when provided.
+
+4. Run the application:
 
 ```bash
-node index.js
+npm start
 ```
 
 3. Open your browser at:
@@ -48,7 +71,7 @@ http://localhost:3000
 
 ## Usage
 
-- Visit `/` to view the landing page.
+- Visit `/` to view the landing page and saved posts loaded from PostgreSQL.
 - Visit `/post` to create a new blog post.
 - After posting, you are redirected to `/post/new` where all posts are listed.
 - Use the `View` button to open a post at `/post/:id`.
@@ -57,7 +80,7 @@ http://localhost:3000
 
 ## Notes
 
-- The application stores posts in memory only. Restarting the server clears all posts.
+- On startup, `db.js` creates the `posts` table if it does not already exist. Restarting the server does not delete posts.
 - Post titles are optional; blank titles display as `Untitled`.
 - Post content is required to create or save a post.
 
@@ -66,5 +89,5 @@ http://localhost:3000
 - express
 - body-parser
 - ejs
-
-
+- pg
+- dotenv

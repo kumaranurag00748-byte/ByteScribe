@@ -1,20 +1,35 @@
 import express from "express";
 import bodyParser from "body-parser";
+import {
+  createPost,
+  deletePost,
+  findPostById,
+  initializeDatabase,
+  listPosts,
+  updatePost,
+} from "./db.js";
 
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 
 app.set("view engine", "ejs");
 app.set("views", "./views");
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
-  res.render("index");
-});
+const asyncRoute = (handler) => (req, res, next) => {
+  Promise.resolve(handler(req, res, next)).catch(next);
+};
 
-const posts = [];
-let nextPostId = 1;
+const getPostId = (req) => {
+  const id = Number(req.params.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
+
+app.get("/", asyncRoute(async (req, res) => {
+  const posts = await listPosts();
+  res.render("index", { posts });
+}));
 
 app.get("/post", (req, res) => {
   res.render("app", {
@@ -23,7 +38,7 @@ app.get("/post", (req, res) => {
   });
 });
 
-app.post("/post/new", (req, res) => {
+app.post("/post/new", asyncRoute(async (req, res) => {
   const title = (req.body.title || "").trim();
   const content = (req.body.content || "").trim();
 
@@ -35,47 +50,37 @@ app.post("/post/new", (req, res) => {
     return;
   }
 
-  posts.unshift({
-    id: nextPostId++,
-    title,
-    content,
-    createdAt: new Date(),
-  });
-
+  await createPost(title, content);
   res.redirect("/post/new");
-});
+}));
 
-app.get("/post/new", (req, res) => {
-  res.render("post_new", {
-    posts,
-  });
-});
+app.get("/post/new", asyncRoute(async (req, res) => {
+  const posts = await listPosts();
+  res.render("post_new", { posts });
+}));
 
-app.get("/post/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const post = posts.find((item) => item.id === id);
+app.get("/post/:id", asyncRoute(async (req, res) => {
+  const id = getPostId(req);
+  const post = id ? await findPostById(id) : null;
 
   if (!post) {
     return res.status(404).render("post_view", {
       post: null,
-      id,
+      id: req.params.id,
     });
   }
 
-  res.render("post_view", {
-    post,
-    id,
-  });
-});
+  res.render("post_view", { post, id });
+}));
 
-app.get("/post/:id/edit", (req, res) => {
-  const id = Number(req.params.id);
-  const post = posts.find((item) => item.id === id);
+app.get("/post/:id/edit", asyncRoute(async (req, res) => {
+  const id = getPostId(req);
+  const post = id ? await findPostById(id) : null;
 
   if (!post) {
     return res.status(404).render("post_edit", {
       post: null,
-      id,
+      id: req.params.id,
       errorMessage: "Post not found.",
     });
   }
@@ -85,16 +90,16 @@ app.get("/post/:id/edit", (req, res) => {
     id,
     errorMessage: null,
   });
-});
+}));
 
-app.post("/post/:id/edit", (req, res) => {
-  const id = Number(req.params.id);
-  const postIndex = posts.findIndex((item) => item.id === id);
+app.post("/post/:id/edit", asyncRoute(async (req, res) => {
+  const id = getPostId(req);
+  const existingPost = id ? await findPostById(id) : null;
 
-  if (postIndex === -1) {
+  if (!existingPost) {
     return res.status(404).render("post_edit", {
       post: null,
-      id,
+      id: req.params.id,
       errorMessage: "Post not found.",
     });
   }
@@ -103,34 +108,38 @@ app.post("/post/:id/edit", (req, res) => {
   const content = (req.body.content || "").trim();
 
   if (!content) {
-    const post = posts[postIndex];
     return res.render("post_edit", {
-      post: { ...post, title, content },
+      post: { ...existingPost, title, content },
       id,
       errorMessage: "Please enter some content before saving.",
     });
   }
 
-  posts[postIndex] = {
-    ...posts[postIndex],
-    title,
-    content,
-  };
-
+  await updatePost(id, title, content);
   res.redirect("/post/new");
-});
+}));
 
-app.post("/post/:id/delete", (req, res) => {
-  const id = Number(req.params.id);
-  const postIndex = posts.findIndex((item) => item.id === id);
-
-  if (postIndex !== -1) {
-    posts.splice(postIndex, 1);
+app.post("/post/:id/delete", asyncRoute(async (req, res) => {
+  const id = getPostId(req);
+  if (id) {
+    await deletePost(id);
   }
-
   res.redirect("/post/new");
+}));
+
+app.use((error, req, res, next) => {
+  console.error("Request failed:", error);
+  res.status(500).send("A database error occurred. Please try again later.");
 });
 
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`);
+async function start() {
+  await initializeDatabase();
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
+  });
+}
+
+start().catch((error) => {
+  console.error("Unable to initialize PostgreSQL:", error);
+  process.exit(1);
 });

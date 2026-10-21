@@ -25,6 +25,44 @@
             ByteScribe helps you capture your thoughts with a clean, comfortable writing experience.
           </p>
         </div>
+
+        <section class="blog-cards-wrapper mx-auto">
+          <h2 class="text-center mb-4">Published blogs</h2>
+
+          <% if (posts.length === 0) { %>
+            <div class="row justify-content-center">
+              <div class="col-12 col-md-8 col-lg-6">
+                <div class="alert alert-secondary text-center">
+                  No blogs yet.
+                </div>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="row justify-content-center g-4">
+              <% posts.forEach((post) => { %>
+                <div class="col-12 col-md-6">
+                  <div class="card h-100 blog-card">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title"><%= post.title || 'Untitled' %></h5>
+                      <p class="card-text text-muted text-truncate"><%= post.content.length > 220 ? post.content.slice(0, 220) + '...' : post.content %></p>
+                      <div class="mt-auto d-flex flex-wrap gap-2 card-actions">
+                        <a href="/post/<%= post.id %>" class="btn btn-outline-primary btn-sm">View</a>
+                        <a href="/post/<%= post.id %>/edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+                        <form action="/post/<%= post.id %>/delete" method="POST" class="m-0">
+                          <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <div class="text-center mt-4">
+            <a href="/post/new" class="btn btn-outline-primary">View all posts</a>
+          </div>
+        </section>
       </main>
 
       <div class="container-fluid px-3">
