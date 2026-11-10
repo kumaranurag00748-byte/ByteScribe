@@ -26,7 +26,15 @@ async function request(url, options = {}) {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
-  const data = response.status === 204 ? null : await response.json();
+  const body = response.status === 204 ? "" : await response.text();
+  let data = null;
+  if (body) {
+    try {
+      data = JSON.parse(body);
+    } catch {
+      throw new Error(`Request failed with status ${response.status}.`);
+    }
+  }
   if (!response.ok) {
     throw new Error(data?.message || "Something went wrong. Please try again.");
   }
