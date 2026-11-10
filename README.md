@@ -8,6 +8,8 @@ A small React + Node.js blog application for capturing, editing, and sharing tho
 
 The live deployment uses [Neon](https://neon.tech/) for hosted PostgreSQL storage.
 
+For Vercel deployments, configure `DATABASE_URL` in the project’s Environment Variables for the Production environment, then redeploy. Vercel serves the API through the serverless handler in [`api/[...path].js`](./api/[...path].js).
+
 ## Features
 
 - Create, view, edit, and delete blog posts
